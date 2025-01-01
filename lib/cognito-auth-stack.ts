@@ -1,16 +1,74 @@
-import * as cdk from 'aws-cdk-lib';
+import { 
+  Stack, 
+  CfnOutput,
+  StackProps,
+  aws_lambda as lambda,
+  aws_cognito as cognito,
+  aws_lambda_nodejs as lambda_nodejs,
+} from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
 
-export class CognitoAuthStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+export class CognitoAuthStack extends Stack {
+  constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    // The code that defines your stack goes here
+    const authChallengeLambda = new lambda_nodejs.NodejsFunction(this, 'AuthChallengeLambda', {
+      entry: 'src/lambdas/authChallenge/index.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+    });
 
-    // example resource
-    // const queue = new sqs.Queue(this, 'CognitoAuthQueue', {
-    //   visibilityTimeout: cdk.Duration.seconds(300)
+    const userPool = new cognito.UserPool(this, 'UserPool', {
+      userPoolName: 'MyUserPool',
+      selfSignUpEnabled: true,
+      signInAliases: {
+        email: true,
+      },
+      autoVerify: {
+        email: true,
+      },
+      standardAttributes: {
+        email: {
+          required: true,
+          mutable: false,
+        },
+      },
+      lambdaTriggers: {
+        createAuthChallenge: authChallengeLambda,
+        defineAuthChallenge: authChallengeLambda,
+        verifyAuthChallengeResponse: authChallengeLambda
+      },
+    });
+
+    // const googleProvider = new cognito.UserPoolIdentityProviderGoogle(this, 'Google', {
+    //   clientId: 'YOUR_GOOGLE_CLIENT_ID',
+    //   clientSecret: 'YOUR_GOOGLE_CLIENT_SECRET',
+    //   userPool,
+    //   scopes: ['profile', 'email'],
+    //   attributeMapping: {
+    //     email: cognito.ProviderAttribute.GOOGLE_EMAIL,
+    //     givenName: cognito.ProviderAttribute.GOOGLE_GIVEN_NAME,
+    //     familyName: cognito.ProviderAttribute.GOOGLE_FAMILY_NAME,
+    //   },
     // });
+
+    const userPoolClient = new cognito.UserPoolClient(this, 'UserPoolClient', {
+      // supportedIdentityProviders: [cognito.UserPoolClientIdentityProvider.GOOGLE],
+      userPool,
+      generateSecret: false,
+      authFlows: {
+        custom: true,
+      },
+    });
+
+    // userPoolClient.node.addDependency(googleProvider);
+
+    new CfnOutput(this, 'UserPoolId', {
+      value: userPool.userPoolId,
+    });
+
+    new CfnOutput(this, 'UserPoolClientId', {
+      value: userPoolClient.userPoolClientId,
+    });
   }
 }
