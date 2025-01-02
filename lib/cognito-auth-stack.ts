@@ -12,8 +12,20 @@ export class CognitoAuthStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    const authChallengeLambda = new lambda_nodejs.NodejsFunction(this, 'AuthChallengeLambda', {
-      entry: 'src/lambdas/authChallenge/index.ts',
+    const defineAuthChallengeLambda = new lambda_nodejs.NodejsFunction(this, 'DefineAuthChallengeLambda', {
+      entry: 'src/lambdas/defineAuthChallenge/index.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+    });
+
+    const createAuthChallengeLambda = new lambda_nodejs.NodejsFunction(this, 'createAuthChallengeLambda', {
+      entry: 'src/lambdas/createAuthChallenge/index.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+    });
+
+    const verifyAuthChallengeLambda = new lambda_nodejs.NodejsFunction(this, 'VerifyAuthChallengeLambda', {
+      entry: 'src/lambdas/verifyAuthChallengeResponse/index.ts',
       handler: 'handler',
       runtime: lambda.Runtime.NODEJS_20_X,
     });
@@ -24,9 +36,6 @@ export class CognitoAuthStack extends Stack {
       signInAliases: {
         email: true,
       },
-      autoVerify: {
-        email: true,
-      },
       standardAttributes: {
         email: {
           required: true,
@@ -34,9 +43,9 @@ export class CognitoAuthStack extends Stack {
         },
       },
       lambdaTriggers: {
-        createAuthChallenge: authChallengeLambda,
-        defineAuthChallenge: authChallengeLambda,
-        verifyAuthChallengeResponse: authChallengeLambda
+        createAuthChallenge: createAuthChallengeLambda,
+        defineAuthChallenge: defineAuthChallengeLambda,
+        verifyAuthChallengeResponse: verifyAuthChallengeLambda
       },
     });
 
