@@ -12,23 +12,11 @@ export class CognitoAuthStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    const defineAuthChallengeLambda = new lambda_nodejs.NodejsFunction(this, 'DefineAuthChallengeLambda', {
-      entry: 'src/lambdas/defineAuthChallenge/index.ts',
+    const cognitoAuthLambda = new lambda_nodejs.NodejsFunction(this, 'CognitoAuthLambda', {
+      entry: 'src/lambdas/cognitoAuth/index.ts',
       handler: 'handler',
       runtime: lambda.Runtime.NODEJS_20_X,
-    });
-
-    const createAuthChallengeLambda = new lambda_nodejs.NodejsFunction(this, 'createAuthChallengeLambda', {
-      entry: 'src/lambdas/createAuthChallenge/index.ts',
-      handler: 'handler',
-      runtime: lambda.Runtime.NODEJS_20_X,
-    });
-
-    const verifyAuthChallengeLambda = new lambda_nodejs.NodejsFunction(this, 'VerifyAuthChallengeLambda', {
-      entry: 'src/lambdas/verifyAuthChallengeResponse/index.ts',
-      handler: 'handler',
-      runtime: lambda.Runtime.NODEJS_20_X,
-    });
+    })
 
     const userPool = new cognito.UserPool(this, 'UserPool', {
       userPoolName: 'MyUserPool',
@@ -43,10 +31,10 @@ export class CognitoAuthStack extends Stack {
         },
       },
       lambdaTriggers: {
-        createAuthChallenge: createAuthChallengeLambda,
-        defineAuthChallenge: defineAuthChallengeLambda,
-        verifyAuthChallengeResponse: verifyAuthChallengeLambda
-      },
+        createAuthChallenge: cognitoAuthLambda,
+        defineAuthChallenge: cognitoAuthLambda,
+        verifyAuthChallengeResponse: cognitoAuthLambda
+      }
     });
 
     // const googleProvider = new cognito.UserPoolIdentityProviderGoogle(this, 'Google', {
