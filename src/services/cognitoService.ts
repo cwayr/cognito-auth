@@ -21,7 +21,7 @@ export class CognitoService {
   }
 
   public async authenticate(
-    userId: string, 
+    userId: string
   ): Promise<InitiateAuthCommandOutput> {
     const params: InitiateAuthCommandInput = {
       ClientId: this.clientId,

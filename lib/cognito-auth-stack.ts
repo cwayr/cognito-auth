@@ -4,6 +4,7 @@ import {
   StackProps,
   aws_lambda as lambda,
   aws_cognito as cognito,
+  aws_apigateway as api_gateway,
   aws_lambda_nodejs as lambda_nodejs,
 } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
@@ -11,6 +12,8 @@ import { Construct } from 'constructs';
 export class CognitoAuthStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
+
+    // -------- COGNITO --------
 
     const cognitoAuthLambda = new lambda_nodejs.NodejsFunction(this, 'CognitoAuthLambda', {
       entry: 'src/lambdas/cognitoAuth/index.ts',
@@ -59,6 +62,17 @@ export class CognitoAuthStack extends Stack {
     });
 
     // userPoolClient.node.addDependency(googleProvider);
+
+    // -------- API GATEWAY --------
+    
+    const api = new api_gateway.RestApi(this, 'CognitoAuthAPI', {
+      restApiName: 'CognitoAuthAPI',
+    });
+
+    const authenticateResource = api.root.addResource('authenticate');
+    authenticateResource.addMethod('POST', new api_gateway.LambdaIntegration(cognitoAuthLambda));
+
+    // -------- OUTPUTS --------
 
     new CfnOutput(this, 'UserPoolId', {
       value: userPool.userPoolId,
